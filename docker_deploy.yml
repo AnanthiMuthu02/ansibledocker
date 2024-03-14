@@ -1,0 +1,35 @@
+---
+- name: Deploy Apache Server on Docker
+  hosts: target
+  become: true
+  tasks:
+    - name: Install Docker
+      yum:
+        name: docker
+        state: latest
+
+    - name: Start and enable Docker service
+      service:
+        name: docker.service
+        state: started
+        enabled: yes
+
+    - name: Create a custom Docker network
+      community.docker.docker_network:
+        name: my_custom_network
+        ipam_options:
+          subnet: '172.168.10.0/30'
+          gateway: '172.168.10.1'
+
+    - name: Run Apache server in Docker
+      docker_container:
+        name: apache_server
+        image: httpd
+        state: started
+        recreate: yes
+        exposed_ports:
+          - "80"
+        published_ports:
+          - "80:80"
+        networks:
+          - name: my_custom_network
